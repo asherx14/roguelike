@@ -5,19 +5,19 @@ use bevy_ecs_ldtk::prelude::*;
 mod player;
 mod level;
 mod core;
-mod window;
+mod camera;
 
 use crate::level::LevelPlugin;
 use crate::player::PlayerPlugin;
-use crate::window::RoguelikeWindowPlugin;
+use crate::camera::CameraPlugin;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins( ( LdtkPlugin,
+                        CameraPlugin,
                         LevelPlugin, 
                         PlayerPlugin,
-                        RoguelikeWindowPlugin,
                     ))
         .run();
 }

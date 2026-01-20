@@ -2,6 +2,7 @@ use bevy::prelude::*;
 // use avian2d::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 
+use crate::camera;
 use crate::level;
 use crate::core::*;
 pub struct PlayerPlugin;
@@ -39,12 +40,12 @@ struct PlayerMoveTimer {
 }
 
 fn handle_player_movement(
-    mut players: Query<&mut GridCoords, With<Player>>,
+    player_single: Single<(&mut GridCoords, &mut Transform), With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     mut move_timer: ResMut<PlayerMoveTimer>,
     level_walls: Res<level::LevelWalls>,
-    mut camera_transform: Single<&mut Transform, With<Camera2d>>,
+    mut messages: ResMut<Messages<camera::CenterCamera>>,
 ) {
     // advance the cooldown timer each frame
     move_timer.timer.tick(time.delta());
@@ -66,25 +67,30 @@ fn handle_player_movement(
         return;
     };
 
-     for mut player_grid_coords in players.iter_mut() {
-        let destination = *player_grid_coords + movement_direction;
-        if !level_walls.in_wall(&destination) {
-            *player_grid_coords = destination;
-            camera_transform.translation.x += movement_direction.x as f32 * GRID_SIZE as f32;
-            camera_transform.translation.y += movement_direction.y as f32 * GRID_SIZE as f32;
-            
-            move_timer.timer.reset();
-        }
-    }
+    let (mut player_grid_coords, player_transform) = player_single.into_inner();
+    let destination = *player_grid_coords + movement_direction;
+
+    if !level_walls.in_wall(&destination) {
+        *player_grid_coords = destination;
+        update_translation_from_grid_coords(player_transform.into_inner(), player_grid_coords.into_inner());
+
+        messages.write(camera::CenterCamera);
+
+        move_timer.timer.reset();
+}
     
 }
 
 fn translate_grid_coords_entities(
-    mut grid_coords_entities: Query<(&mut Transform, &GridCoords), Changed<GridCoords>>,
+    grid_coords_entities: Query<(&mut Transform, &mut GridCoords), (Without<Player>, Without<Camera2d>, Changed<GridCoords>)>,
 ) {
-    for (mut transform, grid_coords) in grid_coords_entities.iter_mut() {
-        transform.translation =
+    grid_coords_entities.into_iter().for_each(|(transform, grid_coords)| {
+        update_translation_from_grid_coords(transform.into_inner(), grid_coords.into_inner());
+    });
+}
+
+fn update_translation_from_grid_coords(transform: &mut Transform, grid_coords: &GridCoords)  {
+    transform.translation =
             bevy_ecs_ldtk::utils::grid_coords_to_translation(*grid_coords, IVec2::splat(GRID_SIZE))
                 .extend(transform.translation.z);
-    }
 }

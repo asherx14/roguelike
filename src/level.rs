@@ -5,6 +5,7 @@ use bevy_ecs_ldtk::prelude::*;
 
 use crate::core::*;
 use crate::player;
+use crate::camera;
 
 pub struct LevelPlugin;
 
@@ -105,14 +106,15 @@ impl LevelWalls {
 fn load_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut messages: ResMut<Messages<camera::CenterCamera>>
 ) {
 
     commands.spawn(LdtkWorldBundle {
         ldtk_handle: asset_server.load("map.ldtk").into(),
         ..Default::default()
     });
-    
-    commands.spawn(Camera2d);
+
+    messages.write(camera::CenterCamera);
 }
 #[derive(Message)]
 struct LoadLevel {
@@ -164,3 +166,5 @@ fn load_next_level(
         }
     }
 }
+
+
