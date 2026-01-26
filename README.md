@@ -1,5 +1,5 @@
 # Info
-This is a project created to learn the bevel game engine.
+This is a project created to learn the bevy game engine.
 ## Dependencies
 ### bevy 0.17
 * bevy 0.18 was incompatible with older plugins when I tried it initially
